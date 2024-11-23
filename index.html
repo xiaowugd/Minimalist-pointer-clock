@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clock</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            position: relative;
+            background-size: cover;
+            background-position: center;
+            transition: all 0.5s;
+        }
+
+        .footer {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            font-size: 14px;
+            transform: translateX(-50%);
+        }
+
+        .context-menu {
+            position: fixed;
+            background-color: rgba(151, 151, 151, 0.523);
+            padding: 10px;
+            display: none;
+            z-index: 999;
+            border-radius: 8px;
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+
+        .context-menu.show {
+            display: block;
+            opacity: 1;
+        }
+
+        .context-menu ul {
+            list-style-type: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .context-menu li {
+            font-size: 16px;
+            padding: 5px 10px;
+            cursor: pointer;
+            border-radius: 8px;
+        }
+
+        .context-menu li:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+
+        :root {
+            --bg-color: #f0f0f0;
+            --text-color: #333;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-color: #111111;
+                --text-color: #f0f0f0;
+            }
+        }
+
+        .firework {
+            position: absolute;
+            display: none;
+            z-index: 1000;
+        }
+
+        .particle {
+            position: absolute;
+            border-radius: 50%;
+            pointer-events: none;
+            animation: explode 1s forwards;
+        }
+
+        @keyframes explode {
+            0% {
+                transform: translate(0) scale(1);
+            }
+            100% {
+                transform: translate(var(--x), var(--y)) scale(0);
+                opacity: 0;
+            }
+        }
+
+        .clock {
+            position: relative;
+            width: 30vw;
+            height: 30vw;
+            max-width: 300px;
+            max-height: 300px;
+            border: 10px solid #ccc;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            margin-top: 20px;
+        }
+
+        .hand {
+            position: absolute;
+            background: #333;
+            border-radius: 10px;
+            transform-origin: bottom center;
+            transition: transform 0.6s ease;
+        }
+
+        .hour-hand {
+            width: 8px;
+            height: 23%;
+            bottom: 50%;
+            left: 49.6%;
+            transform: translate(-50%, 0);
+        }
+
+        .minute-hand {
+            width: 6px;
+            height: 33%;
+            bottom: 50%;
+            left: 49.6%;
+            transform: translate(-50%, 0);
+        }
+
+        .second-hand {
+            width: 4px;
+            height: 40%;
+            bottom: 50%;
+            left: 50%;
+            transform: translate(-50%, 0);
+            background-color: #f9bf90;
+        }
+
+        .center-circle {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: #333;
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        @media (prefers-color-scheme: dark) {
+            .clock {
+                background: rgba(255, 255, 255, 0.05);
+                border-color: #444;
+            }
+            .hand {
+                background: #fff;
+            }
+            .second-hand {
+                background: orange;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .clock {
+                width: 70vw;
+                height: 70vw;
+                max-width: 200px;
+                max-height: 200px;
+            }
+
+            .footer {
+                font-size: 12px;
+            }
+        }
+
+        @media (min-width: 1200px) {
+            .clock {
+                width: 40vw;
+                height: 40vw;
+                max-width: 500px;
+                max-height: 500px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="clock">
+        <div class="hand hour-hand"></div>
+        <div class="hand minute-hand"></div>
+        <div class="hand second-hand"></div>
+        <div class="center-circle"></div>
+    </div>
+    
+    <div class="footer">&copy; 2025 Xiaowugd</div>
+
+    <div class="context-menu" id="context-menu">
+        <ul>
+            <li onclick="launchFirework(event)">放个烟花</li>
+        </ul>
+    </div>
+
+    <script>
+        function setClock() {
+            const now = new Date();
+            const seconds = now.getSeconds();
+            const minutes = now.getMinutes();
+            const hours = now.getHours();
+            const secondHand = document.querySelector('.second-hand');
+            const minuteHand = document.querySelector('.minute-hand');
+            const hourHand = document.querySelector('.hour-hand');
+            const secondsDegrees = ((seconds + now.getMilliseconds() / 1000) / 60) * 360;
+            const minutesDegrees = ((minutes + seconds / 60) / 60) * 360;
+            const hoursDegrees = ((hours + minutes / 60) / 12) * 360;
+            secondHand.style.transform = `rotate(${secondsDegrees}deg)`;
+            minuteHand.style.transform = `rotate(${minutesDegrees}deg)`;
+            hourHand.style.transform = `rotate(${hoursDegrees}deg)`;
+
+            // 修复跳跃问题
+            if (seconds === 0) {
+                secondHand.style.transition = 'none'; // 无动画
+                setTimeout(() => {
+                    secondHand.style.transition = 'transform 0.6s ease'; // 启用动画
+                }, 100); // 100ms后重新启用
+            }
+        }
+        setInterval(setClock, 1000);
+        setClock();
+
+        // 烟花效果
+        document.addEventListener('contextmenu', function (event) {
+            event.preventDefault();
+            const contextMenu = document.getElementById('context-menu');
+            contextMenu.style.left = event.pageX + 'px';
+            contextMenu.style.top = event.pageY + 'px';
+            contextMenu.classList.add('show');
+        });
+
+        document.addEventListener('click', function () {
+            const contextMenu = document.getElementById('context-menu');
+            contextMenu.classList.remove('show');
+        });
+
+        function launchFirework(event) {
+            const numParticles = 68;
+            for (let i = 0; i < numParticles; i++) {
+                createParticle(event.pageX, event.pageY);
+            }
+        }
+
+        function createParticle(x, y) {
+            const particle = document.createElement('div');
+            particle.className = 'particle';
+            document.body.appendChild(particle);
+
+            const size = Math.random() * 10 + 8;
+            particle.style.width = `${size}px`;
+            particle.style.height = `${size}px`;
+
+            const randomColor = `hsl(${Math.random() * 360}, 100%, 50%)`;
+            particle.style.backgroundColor = randomColor;
+
+            const angle = Math.random() * 6 * Math.PI;
+            const distance = Math.random() * 150 + 100;
+
+            particle.style.left = `${x}px`;
+            particle.style.top = `${y}px`;
+            particle.style.setProperty('--x', Math.cos(angle) * distance + 'px');
+            particle.style.setProperty('--y', Math.sin(angle) * distance + 'px');
+
+            particle.style.display = 'block';
+
+            particle.addEventListener('animationend', () => {
+                particle.remove();
+            });
+        }
+    </script>
+</body>
+</html>
